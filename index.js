@@ -3,41 +3,36 @@ let shoppingList = [];
 
 const itemInput = document.getElementById('item-input');
 const addButton = document.getElementById('add-button');
-const markPurchasedButton = document.getElementById('mark-purchased-button');
 const clearListButton = document.getElementById('clear-list-button');
 const shoppingListContainer = document.getElementById('shopping-list');
 
-
 addButton.addEventListener('click', addItem);
-markPurchasedButton.addEventListener('click', markPurchased);
 clearListButton.addEventListener('click', clearList);
+shoppingListContainer.addEventListener('click', togglePurchased);
 
 function addItem() {
   const item = itemInput.value.trim();
   if (item !== '') {
-    shoppingList.push(item);
+    shoppingList.push({ name: item, purchased: false });
     displayItem(item, false);
     itemInput.value = '';
+    saveToLocalStorage();
   }
 }
 
-function markPurchased() {
-  const listItems = document.querySelectorAll('#shopping-list li');
-  listItems.forEach((item, index) => {
-    if (item.classList.contains('purchased')) {
-      item.classList.remove('purchased');
-      shoppingList[index] = shoppingList[index].replace(/\s*\(purchased\)\s*$/, '');
-    } else {
-      item.classList.add('purchased');
-      shoppingList[index] += ' (purchased)';
-    }
-  });
+function togglePurchased(event) {
+  if (event.target.tagName === 'LI') {
+    const index = Array.from(shoppingListContainer.children).indexOf(event.target);
+    shoppingList[index].purchased = !shoppingList[index].purchased;
+    event.target.classList.toggle('purchased');
+    saveToLocalStorage();
+  }
 }
-
 
 function clearList() {
   shoppingList = [];
   shoppingListContainer.innerHTML = '';
+  saveToLocalStorage();
 }
 
 function displayItem(item, isPurchased) {
@@ -49,26 +44,20 @@ function displayItem(item, isPurchased) {
   shoppingListContainer.appendChild(listItem);
 }
 
-
-loadFromLocalStorage();
-
-
 function loadFromLocalStorage() {
   const storedList = localStorage.getItem('shoppingList');
   if (storedList) {
     shoppingList = JSON.parse(storedList);
     shoppingList.forEach((item) => {
-      const isPurchased = item.includes(' (purchased)');
-      const itemText = item.replace(/\s*\(purchased\)\s*$/, '');
-      displayItem(itemText, isPurchased);
+      displayItem(item.name, item.purchased);
     });
   }
 }
-
 
 function saveToLocalStorage() {
   localStorage.setItem('shoppingList', JSON.stringify(shoppingList));
 }
 
-
 window.addEventListener('beforeunload', saveToLocalStorage);
+
+loadFromLocalStorage();
